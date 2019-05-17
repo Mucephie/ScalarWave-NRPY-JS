@@ -257,9 +257,9 @@ void run_sim(int N_iters)
 
 		////////////////////////////////////////////////////////////////////////
 		// Numerical integration
-#include "evolution_equations/RK4_Steps.c"
+		#include "evolution_equations/RK4_Steps.c"
 
-	// Rescale gammabarDD to "unit" determinant
+		// Rescale gammabarDD to "unit" determinant
 		Rescale_Metric_Det(x1G, x2G, x3G, gfs_np1, gfs_aux, params);
 
 		// Enforce trace-free condition on AbarDD

@@ -7,7 +7,7 @@ const int NSKIP_2D_OUTPUT = 5;
 #include "stdio.h"
 #include "stdlib.h"
 #include "math.h"
-// #include <emscripten.h>
+#include <emscripten.h>
 
 // Part P2: Add needed #define's to set data type, the IDX4() macro, and the gridfunctions
 // Part P2a: set REAL=double, so that all floating point numbers are stored to at least ~16 significant digits.
@@ -37,6 +37,7 @@ void rhs_eval(const int Nxx[3], const int Nxx_plus_2NGHOSTS[3], const REAL dxx[3
 #include "ScalarWave_RHSs.h"
 }
 
+
 // Part P6: Declare boundary condition FACE_UPDATE macro,
 //          which updates a single face of the 3D grid cube
 //          using quadratic polynomial extrapolation.
@@ -50,6 +51,7 @@ const int MINFACE = +1;
           -3.0*gfs[IDX4(which_gf,i0+2*FACEX0,i1+2*FACEX1,i2+2*FACEX2)]  \
           +1.0*gfs[IDX4(which_gf,i0+3*FACEX0,i1+3*FACEX1,i2+3*FACEX2)]; \
       }
+
 
 // Part P7: Boundary condition driver routine: Apply BCs to all six
 //          boundary faces of the cube, filling in the innermost
@@ -75,23 +77,9 @@ void apply_bcs(const int Nxx[3], const int Nxx_plus_2NGHOSTS[3], REAL *gfs) {
 }
 
 
-// main() function: => remove main function and make a global script
-// Step 0: Read command-line input, set up grid structure, allocate memory for gridfunctions, set up coordinates
-	// We want to eliminate command line input
-// Step 1: Set up scalar wave initial data
-	// We want to make c call its own initial condition function which will be later callable from javascript.
-// Step 2: Evolve scalar wave initial data forward in time using Method of Lines with RK4 algorithm,
-//         applying quadratic extrapolation outer boundary conditions.
-// Step 3: Output relative error between numerical and exact solution.
-	// 
-// Step 4: Free all allocated memory
-
-// Remove file IO
-// get_gfs => return arrays
-// init_sim()
-// run_sim() => inches forward a step
+// Get the evolved grid functions
+// Should be complete
 //
-
 EMSCRIPTEN_KEEPALIVE
 REAL * get_gfs() {
 	return evol_gfs;
@@ -106,8 +94,9 @@ REAL * get_gfs() {
 
 
 
-
-
+// Initialize simulation 
+//
+//
 EMSCRIPTEN_KEEPALIVE
 void init_sim() {
 	const int argv = 128;
@@ -136,8 +125,8 @@ void init_sim() {
 	REAL *k4_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
 
 	// Step 0d: Set up coordinates: Set dx, and then dt based on dx_min and CFL condition
-#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
-  // xx[0][i] = xxmin[0] + (i-NGHOSTS)*dxx[0]
+	#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
+    // xx[0][i] = xxmin[0] + (i-NGHOSTS)*dxx[0]
 	REAL dxx[3];
 	for (int i = 0; i < 3; i++) dxx[i] = (xxmax[i] - xxmin[i]) / ((REAL)Nxx[i]);
 	REAL dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
@@ -202,9 +191,6 @@ void init_sim() {
 		}
 		apply_bcs(Nxx, Nxx_plus_2NGHOSTS, evol_gfs);
 
-		///* Step 3: Validation: Output relative error between numerical and exact solution, */
-		//// Step 3a: Evaluate exact solution at current time, (n+1)*dt. Store to k1_gfs.
-		//exact_solution(Nxx_plus_2NGHOSTS,(n+1)*dt, xx, k1_gfs);
 
 		// Step 3b: Output to 2D grid (region of x-y plane near origin) 
 		//          every NSKIP_2D_OUTPUT iterations.
@@ -217,6 +203,12 @@ void init_sim() {
 
 }
 
+
+
+
+// Clean things up/ clear memory of this step
+// Should be complete
+//
 EMSCRIPTEN_KEEPALIVE
 void clean_sim() {
 	// Step : Free all allocated memory
