@@ -85,6 +85,10 @@ REAL * get_gfs() {
 	return evol_gfs;
 }
 
+// Get size of simulation space 
+// Search NUM_EVOL_GFS and check setup of Ntot
+// Could have to do with NUM_GFS in step 0c
+//
 // EMSCRIPTEN_KEEPALIVE
 // int get_gfs_size(){
 //
@@ -95,13 +99,13 @@ REAL * get_gfs() {
 
 
 // Initialize simulation 
-//
+// Needs initial data from exact(t=0), or random data like line 187 SENR-em.c
 //
 EMSCRIPTEN_KEEPALIVE
 void init_sim() {
 	const int argv = 128;
 	// Step 0b: Set up numerical grid structure, first in space...
-	const int Nx0x1x2 = atoi(argv);
+	const int Nx0x1x2 = atoi(argv); // What does atoi() do?
 	const int Nxx[3] = { Nx0x1x2, Nx0x1x2, Nx0x1x2 };
 	const int Nxx_plus_2NGHOSTS[3] = { Nxx[0] + 2 * NGHOSTS, Nxx[1] + 2 * NGHOSTS, Nxx[2] + 2 * NGHOSTS };
 	const int Nxx_plus_2NGHOSTS_tot = Nxx_plus_2NGHOSTS[0] * Nxx_plus_2NGHOSTS[1] * Nxx_plus_2NGHOSTS[2];
@@ -125,13 +129,15 @@ void init_sim() {
 	REAL *k4_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
 
 	// Step 0d: Set up coordinates: Set dx, and then dt based on dx_min and CFL condition
-	#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
-    // xx[0][i] = xxmin[0] + (i-NGHOSTS)*dxx[0]
+#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
+// xx[0][i] = xxmin[0] + (i-NGHOSTS)*dxx[0]
 	REAL dxx[3];
 	for (int i = 0; i < 3; i++) dxx[i] = (xxmax[i] - xxmin[i]) / ((REAL)Nxx[i]);
-	REAL dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
+
+	
 	int Nt = (int)(t_final / dt + 0.5); // The number of points in time.
 										//Add 0.5 to account for C rounding down integers.
+	
 
 
 	// Step 0e: Set up Cartesian coordinate grids
@@ -144,16 +150,36 @@ void init_sim() {
 	}
 
 	// Step 1: Set up initial data to be exact solution at time=0:
+	// 
+	// We don't have exact_solution() anymore, will change to take input from mouse. 
+	//
 	exact_solution(Nxx_plus_2NGHOSTS, 0.0, xx, evol_gfs);
 	output_2D(0, 0.0, evol_gfs, evol_gfs, Nxx, Nxx_plus_2NGHOSTS, xx);
+}
 
-	for (int n = 0; n <= Nt; n++) { // Main loop to progress forward in time.
+
+
+// Run next step of simulation 
+// Configure N_iters
+//
+EMSCRIPTEN_KEEPALIVE
+void run_sim(int iter_start, int N_iters)
+{
+	int iter_start = 0;
+	REAL dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
+
+	for (int n = iter_start; n <= Nt; n++) { // Main loop to progress forward in time.
+
+		const REAL t = n * dt;
 
 	  // Step 2b: Evolve scalar wave initial data forward in time using Method of Lines with RK4 algorithm,
 	  //          applying quadratic extrapolation outer boundary conditions.
+
 	  /***************************************************/
 	  /* Implement RK4 for Method of Lines timestepping: */
 	  /***************************************************/
+
+
 	  /* -= RK4: Step 1 of 4 =- */
 	  /* First evaluate k1 = RHSs expression             */
 		rhs_eval(Nxx, Nxx_plus_2NGHOSTS, dxx, evol_gfs, k1_gfs);
@@ -187,27 +213,16 @@ void init_sim() {
 		rhs_eval(Nxx, Nxx_plus_2NGHOSTS, dxx, next_in_gfs, k4_gfs);
 		for (int i = 0; i < Nxx_plus_2NGHOSTS_tot*NUM_GFS; i++) {
 			k4_gfs[i] *= dt;
+
 			evol_gfs[i] += (1.0 / 6.0)*(k1_gfs[i] + 2.0*k2_gfs[i] + 2.0*k3_gfs[i] + k4_gfs[i]);
 		}
 		apply_bcs(Nxx, Nxx_plus_2NGHOSTS, evol_gfs);
-
-
-		// Step 3b: Output to 2D grid (region of x-y plane near origin) 
-		//          every NSKIP_2D_OUTPUT iterations.
-		if ((n + 1) % NSKIP_2D_OUTPUT == 0) {
-			output_2D((n + 1), (n + 1)*dt, evol_gfs, k1_gfs, Nxx, Nxx_plus_2NGHOSTS, xx);
-		}
-
-
-	} // End main loop to progress forward in time.
+	}
 
 }
 
-
-
-
 // Clean things up/ clear memory of this step
-// Should be complete
+// Should be complete now
 //
 EMSCRIPTEN_KEEPALIVE
 void clean_sim() {

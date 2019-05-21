@@ -1,0 +1,37 @@
+<!DOCTYPE>
+<html>
+<head>
+  <script
+    src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script type="text/javascript" src="plots.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <div id="control">
+    <div id="pause">
+      <i class="material-icons">pause</i>
+    </div>
+    <div id="play">
+      <i class="material-icons">play_arrow</i>
+    </div>
+    <div id="counter">0</div>
+    <div id="field"></div>
+  </div>
+  <div id="display"></div>
+  <script type="text/javascript">
+    // Declare Module with onRuntimeInitialized before including SENR.js.
+    // Per: https://kripken.github.io/emscripten-site/docs/getting_started/FAQ.html#how-can-i-tell-when-the-page-is-fully-loaded-and-it-is-safe-to-call-compiled-functions
+    var Module = { onRuntimeInitialized: function() {
+      $( document ).ready( function() {
+        var senr_sim = new SENRSimulation();
+      });
+    }};
+  </script>
+  <script type="text/javascript" src="SENR.js"></script>
+</body>
+
+</html>
