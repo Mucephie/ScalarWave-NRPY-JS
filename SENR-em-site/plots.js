@@ -111,43 +111,43 @@ class SENRSimulation
         minorgridcount: 9,
         type: 'linear',
         showticklabels: "none",
-        showgrid: false, // Original was false; wanted to see if true sheds light on graphing issue
+        showgrid: false // Original was false; wanted to see if true sheds light on graphing issue
       },
       baxis: { // radially outward axis
         smoothing: 0,
         minorgridcount: 9,
         type: 'linear',
         showticklabels: "none",
-        showgrid: false, // Original was false; wanted to see if true sheds light on graphing issue
+        showgrid: false // Original was false; wanted to see if true sheds light on graphing issue
       }
     }, {
       z: arr['z'],
       a: arr['a'],
       b: arr['b'],
-      type: 'contourcarpet',
+      type: 'contourcarpet'
     }];
 
-    var layout = {
-        yaxis: {
-          zeroline: false,
-          showgrid: true, // Original was false
-          autorange: true,
-          showline: false,
-          ticks: '',
-          showticklabels: true, // Original was false, gives numerical labels to y-axis grid
-        },
-        xaxis: {
-          scaleratio: 1,
-          scaleanchor: "y", // Scales x-axis to the size of the y-axis
-          showgrid: true, // Original was false
-          autorange: true,
-          showline: false,
-          ticks: '',
-          showticklabels: true, // Original was false, gives numerical labels to x-axis grid
-        },
-        hovermode: "closest",
-        height: 900, // Original was 700 and was slightly smaller than desired
-      }
+      var layout = {
+          yaxis: {
+              zeroline: false,
+              showgrid: true, // Original was false
+              autorange: true,
+              showline: false,
+              ticks: '',
+              showticklabels: true, // Original was false, gives numerical labels to y-axis grid
+          },
+          xaxis: {
+              scaleratio: 1,
+              scaleanchor: "y", // Scales x-axis to the size of the y-axis
+              showgrid: true, // Original was false
+              autorange: true,
+              showline: false,
+              ticks: '',
+              showticklabels: true, // Original was false, gives numerical labels to x-axis grid
+          },
+          hovermode: "closest",
+          height: 900 // Original was 700 and was slightly smaller than desired
+      };
 
 
     Plotly.newPlot('display', data, layout);

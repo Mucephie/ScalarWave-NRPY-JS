@@ -30,7 +30,10 @@ const REAL wavespeed = 1.0;
 const REAL kk0 = 1.0;
 const REAL kk1 = 1.0;
 const REAL kk2 = 1.0;
-
+// Part P4: Declare the function for the exact solution. time==0 corresponds to the initial data.
+void exact_solution(const int Nxx_plus_2NGHOSTS[3],const REAL time,REAL *xx[3], REAL *in_gfs) {
+#include "ScalarWave_ExactSolution.h"
+}
 
 // Part P5: Declare the function to evaluate the scalar wave RHSs
 void rhs_eval(const int Nxx[3], const int Nxx_plus_2NGHOSTS[3], const REAL dxx[3], const REAL *in_gfs, REAL *rhs_gfs) {
@@ -150,9 +153,6 @@ void init_sim() {
 	}
 
 	// Step 1: Set up initial data to be exact solution at time=0:
-	// 
-	// We don't have exact_solution() anymore, will change to take input from mouse. 
-	//
 	exact_solution(Nxx_plus_2NGHOSTS, 0.0, xx, evol_gfs);
 	output_2D(0, 0.0, evol_gfs, evol_gfs, Nxx, Nxx_plus_2NGHOSTS, xx);
 }

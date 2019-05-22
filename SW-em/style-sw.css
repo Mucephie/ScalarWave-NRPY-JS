@@ -27,7 +27,7 @@ html, body {
 
     #control #play,
     #control #pause {
-        cursor: hand;
+        cursor: grab;
         margin-right: 5px;
     }
 

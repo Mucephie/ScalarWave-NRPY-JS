@@ -1,9 +1,10 @@
 {
   "ExpandedNodes": [
     "",
+    "\\ScalarWave",
     "\\SENR-em-site",
     "\\SW-em"
   ],
-  "SelectedNode": "\\SENR-em-site\\styles.css",
+  "SelectedNode": "\\SENR-em-site\\plots.js",
   "PreviewInSolutionExplorer": false
 }

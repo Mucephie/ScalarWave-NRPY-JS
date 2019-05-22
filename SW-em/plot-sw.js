@@ -14,9 +14,9 @@ class SWSimulation {
 
         // Menu of field types with their label codes
         self.fields = [
-            { val: 0, text: "v0" },
-            { val: 1, text: "1" },
-            { val: 2, text: "2" }
+            { val: 0, text: "UUGF" },
+            { val: 1, text: "VVGF" }
+            //{ val: 0, text: "UUGF" }
 
         ];
         // Default field to plot '0'
@@ -74,7 +74,9 @@ class SWSimulation {
         var self = this;
         var arr = get_SW_arrays(g);
 
+        // Rework for ScalarWave GFS
         var data = [{
+            //colorscale : [['0' , 'rgb(0,225,100)'],['1', 'rgb(100,0,200)']]
             x: arr['x'],
             y: arr['y'],
             a: arr['a'],
@@ -85,34 +87,48 @@ class SWSimulation {
                 minorgridcount: 9,
                 type: 'linear',
                 showticklabels: "none",
-                showgrid: false, // Original was false; wanted to see if true sheds light on graphing issue
+                showgrid: false // Original was false; wanted to see if true sheds light on graphing issue
             },
             baxis: { // radially outward axis
                 smoothing: 0,
                 minorgridcount: 9,
                 type: 'linear',
                 showticklabels: "none",
-                showgrid: false, // Original was false; wanted to see if true sheds light on graphing issue
+                showgrid: false // Original was false; wanted to see if true sheds light on graphing issue
             }
         }, {
             z: arr['z'],
             a: arr['a'],
             b: arr['b'],
-            type: 'contourcarpet',
+            type: 'contourcarpet'
         }];
-
+        // Needs to be  3-D
         var layout = {
             yaxis: {
-                zeroline: false,
+                zeroline: true,
+                type: 'linear',
                 showgrid: true, // Original was false
                 autorange: true,
                 showline: false,
                 ticks: '',
-                showticklabels: true, // Original was false, gives numerical labels to y-axis grid
+                showticklabels: true // Original was false, gives numerical labels to y-axis grid
             },
             xaxis: {
+                zeroline: true,
+                type: 'linear',
                 scaleratio: 1,
                 scaleanchor: "y", // Scales x-axis to the size of the y-axis
+                showgrid: true, // Original was false
+                autorange: true,
+                showline: false,
+                ticks: '',
+                showticklabels: true // Original was false, gives numerical labels to x-axis grid
+            },
+            zaxis: {
+                zeroline: true,
+                type: 'linear',
+                scaleratio: 1,
+                scaleanchor: "y", // Scales z-axis to the size of the y-axis
                 showgrid: true, // Original was false
                 autorange: true,
                 showline: false,
@@ -120,18 +136,20 @@ class SWSimulation {
                 showticklabels: true, // Original was false, gives numerical labels to x-axis grid
             },
             hovermode: "closest",
-            height: 900, // Original was 700 and was slightly smaller than desired
-        }
+            height: 900 // Original was 700 and was slightly smaller than desired
+        };
 
 
         Plotly.newPlot('display', data, layout);
         Plotly.Plots.resize('display');
+        //Plotly.newPlot('myDiv', data, layout, {displaylogo: false});
     }
 
     updatePlotData(g) {
         console.log('Updating plot data, showing field', g, '.');
         var arr = get_SW_arrays(g);
-        Plotly.restyle('display', { z: [arr['z']] });
+        // vv this will probably be redundant 
+        //Plotly.restyle('display', { z: [arr['z']] });
     }
 
 } // SWSimulation class
@@ -156,10 +174,11 @@ function get_SW_arrays(g) {
 
     // TODO: redo all this neatly.
     // 
-    var gfs_ptr_F64 = Module._get_gfs() / 9; // /8
+    var gfs_ptr_F64 = Module._get_gfs() / 9; // /8 does this need to be divided? >> two grid functions incoming
     var gfs_size = Module._get_gfs_size();
     var gfs_arr = Module.HEAPF64.subarray(gfs_ptr_F64, gfs_ptr_F64 + gfs_size);
 
+    // split incoming gfs into 
     var nx = 128;
     var ny = 32;
     var nz = 2;
