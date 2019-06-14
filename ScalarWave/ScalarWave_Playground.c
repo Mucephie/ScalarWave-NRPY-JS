@@ -1,6 +1,6 @@
 // Part P0: Set the number of ghost cells, from NRPy+'s FD_CENTDERIVS_ORDER
-#define NGHOSTS 2
-
+//#define NGHOSTS 2
+const int NGHOSTS = 2;
 const int NSKIP_2D_OUTPUT = 5;
 
 // Part P1: Import needed header files
@@ -12,6 +12,31 @@ const int NSKIP_2D_OUTPUT = 5;
 // Part P2: Add needed #define's to set data type, the IDX4() macro, and the gridfunctions
 // Part P2a: set REAL=double, so that all floating point numbers are stored to at least ~16 significant digits.
 #define REAL double
+#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
+//define constants and variables outside of functions to make global
+//const int argv = 128;
+// Step 0b: Set up numerical grid structure, first in space...
+const int Nx0x1x2= 128;
+	//Nx0x1x2  = 128; // What does atoi() do?
+const int Nxx[3]= { Nx0x1x2, Nx0x1x2, Nx0x1x2 };
+int Nxx_plus_2NGHOSTS[3]  = { Nxx[0] + 2 * NGHOSTS, Nxx[1] + 2 * NGHOSTS, Nxx[2] + 2 * NGHOSTS }; // const
+int Nxx_plus_2NGHOSTS_tot = Nxx_plus_2NGHOSTS[0] * Nxx_plus_2NGHOSTS[1] * Nxx_plus_2NGHOSTS[2]; // const
+
+REAL *evol_gfs;
+const REAL CFL_FACTOR = 0.5; // Set the CFL Factor
+
+//where is this coming from?
+REAL dxx[3];
+
+REAL dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
+//          ... and then set up the numerical grid structure in time:
+REAL t_final = 1 * 0.8; /* Final time is set so that at t=t_final,
+										  data at the origin have not been corrupted
+										  by the approximate outer boundary condition */
+int Nt = (int)(t_final / dt + 0.5); // The number of points in time.
+										//Add 0.5 to account for C rounding down integers.
+REAL t = 1 * dt;
+
 // Part P2b: Declare the IDX4(gf,i,j,k) macro, which enables us to store 4-dimensions of
 //           data in a 1D array. In this case, consecutive values of "i" 
 //           (all other indices held to a fixed value) are consecutive in memory, where 
@@ -20,6 +45,7 @@ const int NSKIP_2D_OUTPUT = 5;
 //           "k" are separated by Nxx_plus_2NGHOSTS[0]*Nxx_plus_2NGHOSTS[1] in memory, etc.
 #define IDX4(g,i,j,k) \
 ( (i) + Nxx_plus_2NGHOSTS[0] * ( (j) + Nxx_plus_2NGHOSTS[1] * ( (k) + Nxx_plus_2NGHOSTS[2] * (g) ) ) )
+
 // Part P2c: Set UUGF and VVGF macros
 #define NUM_GFS 2
 #define UUGF 0
@@ -79,6 +105,29 @@ void apply_bcs(const int Nxx[3], const int Nxx_plus_2NGHOSTS[3], REAL *gfs) {
 	}
 }
 
+// Part P8: 2D File output routine, for comparing numerical results to exact solution\n",
+void output_2D(const int iter,const REAL time,
+                   const REAL *numerical_gridfunction_data,REAL *gridfunction_to_store_exact,
+                   const int Nxx[3],const int Nxx_plus_2NGHOSTS[3],REAL *xx[3]) {
+        // Step 2a: Validation: Output to 2D data files numerical and exact solutions
+        exact_solution(Nxx_plus_2NGHOSTS,time, xx, gridfunction_to_store_exact);
+        //char filename[100];
+        //sprintf(filename,"out2D__resolution_%dx%dx%d__iter_%d.txt",Nxx[0],Nxx[1],Nxx[2],iter);
+        //FILE *out2D = fopen(filename, "w");
+        for(int i0=0;i0<Nxx[0]+2*NGHOSTS;i0++) {
+            for(int i1=0;i1<Nxx[1]+2*NGHOSTS;i1++) {
+                if(i0> (Nxx[0]+2*NGHOSTS)*.25 && i0< (Nxx[0]+2*NGHOSTS)*.75 &&
+                   i1> (Nxx[1]+2*NGHOSTS)*.25 && i1< (Nxx[1]+2*NGHOSTS)*.75) { 
+                    REAL xx0 = xx[0][i0];
+                    REAL xx1 = xx[1][i1];
+                    printf("%e %e %e %e\n", xx0,xx1,
+                            numerical_gridfunction_data[IDX4(0,i0,i1, (int)((Nxx[2]+ 2*NGHOSTS)*0.5))],
+                            gridfunction_to_store_exact[  IDX4(0,i0,i1, (int)((Nxx[2]+ 2*NGHOSTS)*0.5))]);
+                }
+            }
+        }
+        //fclose(out2D);
+}
 
 // Get the evolved grid functions
 // Should be complete
@@ -106,25 +155,31 @@ REAL * get_gfs() {
 //
 EMSCRIPTEN_KEEPALIVE
 void init_sim() {
-	const int argv = 128;
-	// Step 0b: Set up numerical grid structure, first in space...
-	const int Nx0x1x2 = atoi(argv); // What does atoi() do?
-	const int Nxx[3] = { Nx0x1x2, Nx0x1x2, Nx0x1x2 };
-	const int Nxx_plus_2NGHOSTS[3] = { Nxx[0] + 2 * NGHOSTS, Nxx[1] + 2 * NGHOSTS, Nxx[2] + 2 * NGHOSTS };
-	const int Nxx_plus_2NGHOSTS_tot = Nxx_plus_2NGHOSTS[0] * Nxx_plus_2NGHOSTS[1] * Nxx_plus_2NGHOSTS[2];
+	// const int argv = 128;
+	// // Step 0b: Set up numerical grid structure, first in space...
+	// const int Nx0x1x2= 128;
+	// //Nx0x1x2  = 128; // What does atoi() do?
+	// extern const int Nxx[3];
+	// Nxx[3] = { Nx0x1x2, Nx0x1x2, Nx0x1x2 };
+	// extern const int Nxx_plus_2NGHOSTS[3];
+	// Nxx_plus_2NGHOSTS[3] = { Nxx[0] + 2 * NGHOSTS, Nxx[1] + 2 * NGHOSTS, Nxx[2] + 2 * NGHOSTS };
+	// extern const int Nxx_plus_2NGHOSTS_tot;
+	// Nxx_plus_2NGHOSTS_tot = Nxx_plus_2NGHOSTS[0] * Nxx_plus_2NGHOSTS[1] * Nxx_plus_2NGHOSTS[2];
 
 	const REAL xxmin[3] = { -10.,-10.,-10. };
 	const REAL xxmax[3] = { 10., 10., 10. };
 
 
 	//          ... and then set up the numerical grid structure in time:
-	const REAL t_final = xxmax[0] * 0.8; /* Final time is set so that at t=t_final,
+	t_final = xxmax[0] * 0.8; /* const Final time is set so that at t=t_final,
 										  data at the origin have not been corrupted
 										  by the approximate outer boundary condition */
-	const REAL CFL_FACTOR = 0.5; // Set the CFL Factor
+	// extern const REAL CFL_FACTOR;
+	// CFL_FACTOR = 0.5; // Set the CFL Factor
 
 	// Step 0c: Allocate memory for gridfunctions
-	REAL *evol_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
+	//REAL *evol_gfs;
+	*evol_gfs = *(REAL *)malloc(sizeof(REAL *) * (REAL)NUM_GFS * (REAL)Nxx_plus_2NGHOSTS_tot);
 	REAL *next_in_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
 	REAL *k1_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
 	REAL *k2_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
@@ -132,14 +187,15 @@ void init_sim() {
 	REAL *k4_gfs = (REAL *)malloc(sizeof(REAL) * NUM_GFS * Nxx_plus_2NGHOSTS_tot);
 
 	// Step 0d: Set up coordinates: Set dx, and then dt based on dx_min and CFL condition
-#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
+//#define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
 // xx[0][i] = xxmin[0] + (i-NGHOSTS)*dxx[0]
-	REAL dxx[3];
+	//REAL dxx[3];
 	for (int i = 0; i < 3; i++) dxx[i] = (xxmax[i] - xxmin[i]) / ((REAL)Nxx[i]);
 
 	
-	int Nt = (int)(t_final / dt + 0.5); // The number of points in time.
-										//Add 0.5 to account for C rounding down integers.
+	// extern int Nt;
+	 Nt = (int)(t_final / dt + 0.5); // The number of points in time.
+	// 									//Add 0.5 to account for C rounding down integers.
 	
 
 
@@ -163,14 +219,17 @@ void init_sim() {
 // Configure N_iters
 //
 EMSCRIPTEN_KEEPALIVE
-void run_sim(int iter_start, int N_iters)
+void run_sim(int N_iters)
 {
+	// is defined twice
 	int iter_start = 0;
-	REAL dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
+	// extern REAL dt;
+	dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
 
 	for (int n = iter_start; n <= Nt; n++) { // Main loop to progress forward in time.
 
-		const REAL t = n * dt;
+		//const REAL t
+		t = n * dt;
 
 	  // Step 2b: Evolve scalar wave initial data forward in time using Method of Lines with RK4 algorithm,
 	  //          applying quadratic extrapolation outer boundary conditions.

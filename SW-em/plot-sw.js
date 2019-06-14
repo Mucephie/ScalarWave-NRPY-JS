@@ -178,6 +178,8 @@ function get_SW_arrays(g) {
     var gfs_size = Module._get_gfs_size();
     var gfs_arr = Module.HEAPF64.subarray(gfs_ptr_F64, gfs_ptr_F64 + gfs_size);
 
+
+    
     // split incoming gfs into 
     var nx = 128;
     var ny = 32;
