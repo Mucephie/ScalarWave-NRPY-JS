@@ -13,16 +13,20 @@ const int NSKIP_2D_OUTPUT = 5;
 // Part P2a: set REAL=double, so that all floating point numbers are stored to at least ~16 significant digits.
 #define REAL double
 #define MIN(A, B) ( ((A) < (B)) ? (A) : (B) )
+
+// set up paramstruct
+
 //define constants and variables outside of functions to make global
+
 //const int argv = 128;
 // Step 0b: Set up numerical grid structure, first in space...
 const int Nx0x1x2= 128;
-	//Nx0x1x2  = 128; // What does atoi() do?
 const int Nxx[3]= { Nx0x1x2, Nx0x1x2, Nx0x1x2 };
 int Nxx_plus_2NGHOSTS[3]  = { Nxx[0] + 2 * NGHOSTS, Nxx[1] + 2 * NGHOSTS, Nxx[2] + 2 * NGHOSTS }; // const
 int Nxx_plus_2NGHOSTS_tot = Nxx_plus_2NGHOSTS[0] * Nxx_plus_2NGHOSTS[1] * Nxx_plus_2NGHOSTS[2]; // const
 
 REAL *evol_gfs;
+
 const REAL CFL_FACTOR = 0.5; // Set the CFL Factor
 
 //where is this coming from?
@@ -30,12 +34,16 @@ REAL dxx[3];
 
 REAL dt = CFL_FACTOR * MIN(dxx[0], MIN(dxx[1], dxx[2])); // CFL condition
 //          ... and then set up the numerical grid structure in time:
-REAL t_final = 1 * 0.8; /* Final time is set so that at t=t_final,
+REAL t_final = 1 * 0.8; // t_final initial value -> changed later in the code
+							/* Final time is set so that at t=t_final,
 										  data at the origin have not been corrupted
 										  by the approximate outer boundary condition */
 int Nt = (int)(t_final / dt + 0.5); // The number of points in time.
 										//Add 0.5 to account for C rounding down integers.
 REAL t = 1 * dt;
+
+//end of set up paramstruct
+
 
 // Part P2b: Declare the IDX4(gf,i,j,k) macro, which enables us to store 4-dimensions of
 //           data in a 1D array. In this case, consecutive values of "i" 
